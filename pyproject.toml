@@ -1,0 +1,22 @@
+[project]
+name = "scientific-calculation-auditor"
+version = "0.1.0"
+description = "Audits scientific calculations and tracks provenance."
+authors = [{name = "Loren", email = "lorenhey@example.com"}]
+dependencies = [
+    "pydantic",
+    "typer",
+    "rich",
+    "pandas",
+    "openpyxl",
+    "nbformat",
+    "nbclient",
+    "ipykernel",
+]
+
+[project.scripts]
+sca = "scientific_calculation_auditor.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
