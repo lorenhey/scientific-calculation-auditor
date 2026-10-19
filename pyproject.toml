@@ -1,8 +1,8 @@
 [project]
 name = "scientific-calculation-auditor"
-version = "0.1.0"
-description = "Audits scientific calculations and tracks provenance."
-authors = [{name = "Loren", email = "lorenhey@example.com"}]
+version = "2.0.0"
+description = "Audits scientific calculations, tracks provenance and verifies the chain of evidence with interactive web visualization and Boxmark audit reports."
+authors = [{name = "Lorenzo Pérez", email = "lorenhey@example.com"}]
 dependencies = [
     "pydantic",
     "typer",
@@ -20,3 +20,7 @@ sca = "scientific_calculation_auditor.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

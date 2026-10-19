@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scientific Calculation Auditor (SCA) - Cadena de Evidencia y Trazabilidad</title>
+  <meta name="description" content="Auditoría automática de scripts científicos, planillas y notebooks de ingeniería. Detección de números mágicos, conversiones inline, redondeo prematuro y reconstrucción de la cadena de evidencia.">
+
+  <!-- KaTeX for Beautiful Mathematical Notation -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Google Fonts & Font Awesome 6 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top Application Bar -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>SCA</span>
+      </div>
+      <span class="version-badge">v2.0.0</span>
+      <span class="org-tag">Boxmark Leather Argentina S.A. | Depto. de Metrología & Auditoría</span>
+    </div>
+
+    <div class="header-controls">
+      <div class="preset-selector-group">
+        <label for="preset-select"><i class="fa-solid fa-file-invoice"></i> Artefacto:</label>
+        <select id="preset-select" class="preset-dropdown">
+          <!-- Populated dynamically via JS -->
+        </select>
+      </div>
+
+      <div id="metric-verdict-badge" class="status-pill-badge pill-pass">
+        Auditando...
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-print-report" class="btn-action btn-cyan" title="Imprimir Dictamen Oficial o Exportar a PDF">
+          <i class="fa-solid fa-print"></i> Imprimir / PDF
+        </button>
+        <button id="btn-export-json" class="btn-action" title="Exportar reporte de auditoría en JSON">
+          <i class="fa-solid fa-file-code"></i> JSON
+        </button>
+        <button id="btn-reset-preset" class="btn-action" title="Restablecer valores del artefacto">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="navigation-bar">
+    <button class="nav-tab-btn active" data-tab="tab-python">
+      <i class="fa-brands fa-python"></i> Auditor Python
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-spreadsheet">
+      <i class="fa-solid fa-table-cells"></i> Auditor Planillas (XLSX)
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-notebook">
+      <i class="fa-solid fa-book-journal-whills"></i> Auditor Notebooks (IPYNB)
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-evidence-graph">
+      <i class="fa-solid fa-diagram-project"></i> Cadena de Evidencia (DAG)
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-report">
+      <i class="fa-solid fa-file-signature"></i> Dictamen Formal Boxmark
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-terminal">
+      <i class="fa-solid fa-terminal"></i> Consola CLI sca
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-teoria">
+      <i class="fa-solid fa-book-open"></i> Tratado de Metrología
+    </button>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main class="workspace-container">
+
+    <!-- Left Sidebar: Chain of Evidence Metrics -->
+    <aside class="sidebar-metrics">
+      <div class="score-main-card">
+        <div class="score-title">Índice de Cadena de Evidencia</div>
+        <div id="metric-overall-index" class="score-value">--%</div>
+        <p style="font-size: 0.75rem; color: #94a3b8;">
+          Calidad global de trazabilidad, rigor dimensional, precisión y reproducibilidad.
+        </p>
+      </div>
+
+      <div class="pillars-group">
+        <!-- 1. Provenance -->
+        <div class="pillar-item">
+          <div class="pillar-header">
+            <span>Trazabilidad / Procedencia (35%)</span>
+          </div>
+          <div class="metric-progress-track">
+            <div id="metric-provenance-bar" class="metric-progress-fill fill-green" style="width: 100%;">100%</div>
+          </div>
+        </div>
+
+        <!-- 2. Dimensionality -->
+        <div class="pillar-item">
+          <div class="pillar-header">
+            <span>Rigor Dimensional (25%)</span>
+          </div>
+          <div class="metric-progress-track">
+            <div id="metric-dimensionality-bar" class="metric-progress-fill fill-green" style="width: 100%;">100%</div>
+          </div>
+        </div>
+
+        <!-- 3. Precision -->
+        <div class="pillar-item">
+          <div class="pillar-header">
+            <span>Integridad Numérica (20%)</span>
+          </div>
+          <div class="metric-progress-track">
+            <div id="metric-precision-bar" class="metric-progress-fill fill-green" style="width: 100%;">100%</div>
+          </div>
+        </div>
+
+        <!-- 4. Reproducibility -->
+        <div class="pillar-item">
+          <div class="pillar-header">
+            <span>Reproducibilidad / Estado (20%)</span>
+          </div>
+          <div class="metric-progress-track">
+            <div id="metric-reproducibility-bar" class="metric-progress-fill fill-green" style="width: 100%;">100%</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.2); padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; color: #94a3b8;">
+        <i class="fa-solid fa-circle-info" style="color: var(--accent-cyan);"></i>
+        <strong>Criterio de Aprobación:</strong>
+        Índice $\ge 75\%$ para habilitar memorias de cálculo en ingeniería de planta.
+      </div>
+    </aside>
+
+    <!-- Center/Right: Tabs Content -->
+    <div class="tab-content-area">
+
+      <!-- TAB 1: PYTHON CODE AUDITOR -->
+      <section id="tab-python" class="tab-pane active">
+        <div class="editor-audit-layout">
+          <div class="editor-card">
+            <div class="card-toolbar">
+              <span><i class="fa-brands fa-python"></i> Editor de Código a Auditar</span>
+              <button id="btn-audit-python" class="btn-action btn-cyan" style="padding: 0.25rem 0.65rem; font-size: 0.75rem;">
+                <i class="fa-solid fa-magnifying-glass"></i> Auditar Código Ahora
+              </button>
+            </div>
+            <textarea id="python-code-editor" class="code-textarea" spellcheck="false"></textarea>
+          </div>
+
+          <div class="findings-card">
+            <div class="card-toolbar">
+              <span><i class="fa-solid fa-list-check"></i> Hallazgos y No Conformidades Detectadas</span>
+            </div>
+            <div id="findings-list-container" class="findings-scroll-area">
+              <!-- Findings cards dynamically generated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: SPREADSHEET AUDITOR -->
+      <section id="tab-spreadsheet" class="tab-pane">
+        <div class="spreadsheet-container">
+          <div class="card-toolbar">
+            <span><i class="fa-solid fa-file-excel" style="color: #10b981;"></i> Visor de Planilla de Cálculo Industrial</span>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span style="font-size: 0.75rem; color: #94a3b8;">
+                <span style="color: #ef4444; font-weight: 700;">■</span> Override Manual &nbsp;|&nbsp;
+                <span style="color: #f59e0b; font-weight: 700;">■</span> Constante Oculta / Link
+              </span>
+              <button id="btn-toggle-formulas" class="btn-action" style="font-size: 0.75rem; padding: 0.25rem 0.65rem;">
+                Ver Fórmulas (=...)
+              </button>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="excel-grid-table" id="spreadsheet-grid">
+              <!-- Rendered dynamically -->
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: NOTEBOOK AUDITOR -->
+      <section id="tab-notebook" class="tab-pane">
+        <div class="notebook-container">
+          <div class="card-toolbar" style="border-radius: 6px;">
+            <span><i class="fa-solid fa-book-journal-whills" style="color: #f59e0b;"></i> Celdas del Jupyter Notebook</span>
+            <button id="btn-run-clean-notebook" class="btn-action btn-cyan" style="font-size: 0.75rem; padding: 0.25rem 0.65rem;">
+              <i class="fa-solid fa-rotate-right"></i> Reiniciar Kernel y Re-ejecutar Limpio
+            </button>
+          </div>
+          <div id="notebook-cells-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CHAIN OF EVIDENCE GRAPH (DAG) -->
+      <section id="tab-evidence-graph" class="tab-pane">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+          <div class="card-toolbar">
+            <span><i class="fa-solid fa-diagram-project" style="color: var(--accent-cyan);"></i> Grafo de Cadena de Evidencia (Lineage de Datos)</span>
+            <span style="font-size: 0.75rem; color: #94a3b8;">
+              <span style="color: #ef4444; font-weight: 700;">---&gt;</span> Enlace Roto (Sin Procedencia) &nbsp;|&nbsp;
+              <span style="color: #10b981; font-weight: 700;">---&gt;</span> Trazable
+            </span>
+          </div>
+          <div id="evidence-graph-container" style="min-height: 500px; background: #060a12;">
+            <!-- SVG rendered by EvidenceGraphRenderer -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: FORMAL BOXMARK AUDIT MEMORANDUM -->
+      <section id="tab-report" class="tab-pane">
+        <div id="formal-report-container">
+          <!-- Rendered dynamically in formal Boxmark standard -->
+        </div>
+      </section>
+
+      <!-- TAB 6: CLI TERMINAL EMULATOR -->
+      <section id="tab-terminal" class="tab-pane">
+        <div class="cli-terminal-window">
+          <div class="cli-titlebar">
+            <span class="cli-dot dot-red"></span>
+            <span class="cli-dot dot-yellow"></span>
+            <span class="cli-dot dot-green"></span>
+            <span style="margin-left: 0.5rem;"><i class="fa-solid fa-terminal"></i> sca interactive console -- audit-station-01</span>
+          </div>
+          <div id="cli-output" class="cli-output-area">
+            <!-- CLI lines -->
+          </div>
+          <div class="cli-input-row">
+            <span class="cli-prompt-symbol">sca&gt;</span>
+            <input type="text" id="cli-input" class="cli-text-input" placeholder="Escribí un comando ('help', 'sca audit steam', 'sca score', 'sca rules')..." autofocus>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 7: THEORETICAL TREATISE & NORMATIVE BACKGROUND -->
+      <section id="tab-teoria" class="tab-pane">
+        <article style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 2.25rem; line-height: 1.7;">
+          <h1 style="color: #fff; font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem;">
+            Metrología Científica, Cadena de Evidencia y Auditoría de Cálculos
+          </h1>
+          <p style="color: var(--accent-cyan); font-weight: 600;">
+            Marco normativo, heurísticas de inspección de código y buenas prácticas de cálculo técnico en Boxmark Leather Argentina S.A.
+          </p>
+
+          <div style="background: rgba(0, 229, 255, 0.05); border-left: 3px solid var(--accent-cyan); padding: 1rem; border-radius: 0 4px 4px 0; margin: 1.5rem 0; font-size: 0.9rem;">
+            <strong>Principio Fundamental de la Auditoría:</strong> <em>"Un número sin fuente declarada no es un dato de ingeniería: es una vulnerabilidad operativa."</em> En procesos industriales de alta exigencia, la validez de un dimensionamiento no depende de que el resultado numérico sea plausible, sino de que la cadena causal completa desde la medición primaria hasta el resultado final sea 100% reproducible y auditable por terceros.
+          </div>
+
+          <h2 style="font-size: 1.35rem; color: #fff; margin-top: 1.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.35rem;">
+            1. Las Cuatro Patologías Clásicas en Cálculos de Ingeniería
+          </h2>
+          <p style="color: #cbd5e1; margin-bottom: 1rem;">
+            La experiencia en auditoría de plantas industriales revela que la gran mayoría de fallas en memorias técnicas se concentran en cuatro desvíos recurrentes:
+          </p>
+          <ul style="margin-left: 1.5rem; color: #cbd5e1; margin-bottom: 1.25rem;">
+            <li><strong>1. Números Mágicos (Magic Numbers):</strong> Literales numéricos embebidos directamente en el cuerpo del código o en fórmulas de celdas (ej. <code>rho = 998.2</code> o <code>=C2 * 1.21 * 9.81</code>). Si una densidad o gravedad no especifica si fue medida a 20 °C o 4 °C, o si la aceleración corresponde a la gravedad estándar internacional (\(g_0 = 9.80665\,\text{m/s}^2\)), el cálculo carece de trazabilidad metrológica conforme a la guía <em>ISO/IEC Guide 98-3 (GUM)</em>.</li>
+            <li><strong>2. Conversiones Inline No Auditadas:</strong> Factores de conversión manuales como <code>/ 3600</code> o <code>* 1000</code>. Además de introducir riesgo de error tipográfico (olvidar un cero o invertir una multiplicación por división), oscurecen la ecuación física subyacente. La buena práctica exige declarar factores nominados (ej. <code>SEGUNDOS_POR_HORA = 3600.0</code>) o emplear un registro dimensional formal como <em>Pint</em>.</li>
+            <li><strong>3. Redondeo Prematuro (Early Rounding):</strong> Aplicar <code>round(v, 2)</code> sobre variables cinemáticas o termodinámicas intermedias. En ecuaciones no lineales (como \(h_f \propto v^2\) o \(J \propto d^4\)), un error de redondeo de 2 decimales en el diámetro o la velocidad se amplifica exponencialmente a la cuarta potencia, derivando en sobredimensionamientos costosos o subdimensionamientos peligrosos.</li>
+            <li><strong>4. Sobreescritura Manual en Planillas (Manual Overrides):</strong> Colocar un número fijo en una celda que debería contener una fórmula de cálculo automático. En auditorías de plantas, este es el vector número uno de accidentes: un operador o analista reemplaza temporalmente un valor para forzar un resultado ("hardcoded patch") y la celda queda corrupta para siempre en los balances futuros.</li>
+          </ul>
+
+          <h2 style="font-size: 1.35rem; color: #fff; margin-top: 1.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.35rem;">
+            2. Formulación del Índice de Cadena de Evidencia (\(I_{evidencia}\))
+          </h2>
+          <p style="color: #cbd5e1; margin-bottom: 1rem;">
+            El motor <code>SCA</code> sintetiza la integridad técnica de cualquier artefacto mediante una combinación ponderada de cuatro pilares cuantitativos:
+          </p>
+          <p style="text-align: center; font-size: 1.15rem; color: #fff; margin: 1.25rem 0;">
+            $$I_{evidencia} = 0.35 \cdot S_{prov} + 0.25 \cdot S_{dim} + 0.20 \cdot S_{prec} + 0.20 \cdot S_{repro} \quad [0 \le I_{evidencia} \le 100]$$
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: #090e18; border: 1px solid var(--border-color); padding: 0.85rem; border-radius: 6px;">
+              <h4 style="color: var(--accent-cyan); margin-bottom: 0.35rem;">Pilar 1: Procedencia (\(S_{prov}\) - 35%)</h4>
+              <p style="font-size: 0.85rem; color: #94a3b8;">
+                Porcentaje de constantes, parámetros y coeficientes empíricos que cuentan con cita formal, metadatos de instrumento de origen (Tag) o referencia normativa reconocida (ASME, DIN, ISO, NIST).
+              </p>
+            </div>
+            <div style="background: #090e18; border: 1px solid var(--border-color); padding: 0.85rem; border-radius: 6px;">
+              <h4 style="color: var(--accent-green); margin-bottom: 0.35rem;">Pilar 2: Rigor Dimensional (\(S_{dim}\) - 25%)</h4>
+              <p style="font-size: 0.85rem; color: #94a3b8;">
+                Ausencia estricta de multiplicadores o divisores empíricos en operaciones algebraicas primarias. Garantiza coherencia dimensional en el Sistema Internacional (SI).
+              </p>
+            </div>
+            <div style="background: #090e18; border: 1px solid var(--border-color); padding: 0.85rem; border-radius: 6px;">
+              <h4 style="color: var(--accent-amber); margin-bottom: 0.35rem;">Pilar 3: Integridad Numérica (\(S_{prec}\) - 20%)</h4>
+              <p style="font-size: 0.85rem; color: #94a3b8;">
+                Preservación de precisión en punto flotante completa (IEEE 754 float64 / 53 bits de significando) en todas las fases analíticas intermedias sin truncamiento prematuro.
+              </p>
+            </div>
+            <div style="background: #090e18; border: 1px solid var(--border-color); padding: 0.85rem; border-radius: 6px;">
+              <h4 style="color: var(--accent-purple); margin-bottom: 0.35rem;">Pilar 4: Reproducibilidad (\(S_{repro}\) - 20%)</h4>
+              <p style="font-size: 0.85rem; color: #94a3b8;">
+                Linealidad determinista del grafo de ejecución: cuadernos sin celdas fuera de secuencia, planillas sin overrides manuales y scripts sin enlaces rotos a libros externos.
+              </p>
+            </div>
+          </div>
+
+          <h2 style="font-size: 1.35rem; color: #fff; margin-top: 1.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.35rem;">
+            3. Protocolo de Aprobación en Boxmark Leather Argentina S.A.
+          </h2>
+          <p style="color: #cbd5e1; margin-bottom: 1rem;">
+            Toda memoria de cálculo técnica sometida a revisión para compra de equipos, montaje de cañerías o modificaciones en salas de calderas y plantas de tratamiento debe satisfacer la escala tripartita de auditoría:
+          </p>
+          <ul style="margin-left: 1.5rem; color: #cbd5e1;">
+            <li><strong>CONFORME / APROBADO (\(I_{evidencia} \ge 75\%\)):</strong> El cálculo es auditable, reproducible y defendible ante inspecciones de planta o aseguradoras.</li>
+            <li><strong>OBSERVADO (\(50\% \le I_{evidencia} < 75\%\)):</strong> Contiene debilidades metodológicas o constantes sin procedencia clara; requiere refactorización antes de su firma.</li>
+            <li><strong>RECHAZADO (\(I_{evidencia} < 50\%\)):</strong> Presencia de sobreescrituras manuales o rotura severa de la cadena de evidencia; el documento no tiene validez legal ni técnica.</li>
+          </ul>
+        </article>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Script Modules -->
+  <script src="js/sca-rules.js"></script>
+  <script src="js/sca-engine.js"></script>
+  <script src="js/evidence-graph.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

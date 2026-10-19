@@ -1,81 +1,111 @@
-# scientific-calculation-auditor
+# Scientific Calculation Auditor (SCA)
 
-> **Reconstructing the chain of evidence.**
+[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-00e5ff?style=for-the-badge&logo=github)](https://lorenhey.github.io/scientific-calculation-auditor/)
+[![Python Tests](https://img.shields.io/badge/Tests-100%25%20Passing-10b981?style=for-the-badge&logo=pytest)](https://github.com/lorenhey/scientific-calculation-auditor)
+[![Standard](https://img.shields.io/badge/Standard-GUM%20%7C%20ASME%20PTC%2019.1%20%7C%20SI-3b82f6?style=for-the-badge)](https://lorenhey.github.io/scientific-calculation-auditor/)
+[![Release](https://img.shields.io/badge/Release-v2.0.0-ffb74d?style=for-the-badge)](https://github.com/lorenhey/scientific-calculation-auditor/releases/tag/v2.0.0)
 
-`scientific-calculation-auditor` (sca) reconstructs the chain of evidence of a calculation and points out where it stops being traceable, reproducible, or technically defensible.
+> **Reconstruyendo la cadena de evidencia.** Auditoría automática de scripts científicos, planillas de cálculo y cuadernos Jupyter. Detecta números mágicos, conversiones inline, redondeos prematuros y sobreescrituras manuales para certificar la reproducibilidad técnica y metrológica en plantas industriales.
 
-When reviewing a calculation, whether it's a Jupyter Notebook, a Python script, or an Excel Spreadsheet, the most important question is: *Where did this number come from?* This project exists to automatically audit calculation artifacts for common scientific and engineering issues such as hidden assumptions, hardcoded constants without provenance, inline unit conversions, early rounding, and broken execution graphs.
+👉 **Accedé a la aplicación interactiva en vivo:**  
+**[https://lorenhey.github.io/scientific-calculation-auditor/](https://lorenhey.github.io/scientific-calculation-auditor/)**
 
-## Features
+---
 
-- **Spreadsheet Auditor (XLSX)**: Detects manual overrides inside formula columns, hardcoded numeric constants inside formulas, and links to external workbooks.
-- **Python Auditor**: Uses AST parsing (not brittle regex) to detect magic numbers, early rounding, and undocumented constant assignments.
-- **Notebook Auditor (IPYNB)**: Checks for out-of-order execution which can lead to hidden state, and attempts a Clean Re-execution from a fresh kernel to verify reproducibility.
-- **Unified Intermediate Representation (IR)**: Models `Inputs`, `Constants`, `Equations`, and `Results` to standardize findings across formats.
-- **CLI and CI-Ready**: Fully functional from the terminal, capable of breaking builds (`--fail-on-error`) if blocking scientific issues are found.
+## 🛠️ Capacidades de Auditoría
 
-## Installation
+1. **Auditor de Código Python (AST):**
+   - Inspección estática del árbol sintáctico abstracto (AST) sin ejecuciones silenciosas.
+   - Detección de constantes numéricas no documentadas (`UNDOCUMENTED_CONSTANT`).
+   - Identificación de multiplicadores o divisores inline empíricos (`INLINE_CONVERSION` como `/ 3600`, `* 1000`).
+   - Detección de truncamiento de precisión (`EARLY_ROUNDING` mediante llamadas intermedias a `round()`).
+   - Verificación de divisiones sin aserción previa de divisor positivo (`DIV_BY_ZERO_RISK`).
+
+2. **Auditor de Planillas de Cálculo (XLSX):**
+   - Detección de sobreescrituras manuales (`MANUAL_OVERRIDE`): celdas escalares fijas incrustadas en columnas homogéneas de cálculo.
+   - Constantes numéricas ocultas en fórmulas (`HARDCODED_CONSTANT` como `=C3*1.21*9.81`).
+   - Detección de dependencias externas no controladas (`EXTERNAL_LINK` referenciando libros externos que quiebran silenciosamente).
+   - Visor interactivo en navegador con conmutación entre *Valores Numéricos* y *Fórmulas Analíticas*.
+
+3. **Auditor de Jupyter Notebooks (IPYNB):**
+   - Detección de ejecución fuera de orden (`OUT_OF_ORDER_EXECUTION` con `execution_count` desfasado que genera estado oculto o zombi).
+   - Detección de celdas no ejecutadas (`UNEXECUTED_CELL`).
+   - Simulador de *Clean Re-execution* desde un kernel limpio.
+
+4. **Grafo de Cadena de Evidencia (DAG de Lineage):**
+   - Representación SVG interactiva de 4 capas:
+     $$\text{Fuentes Primarias / Sensores} \longrightarrow \text{Constantes & Metrología} \longrightarrow \text{Transformaciones Analíticas} \longrightarrow \text{Resultados}$$
+   - Resaltado visual en tiempo real de nodos con "cadena rota" donde un número carece de procedencia.
+
+5. **Índice Cuantitativo de Cadena de Evidencia ($I_{evidencia}$):**
+   $$I_{evidencia} = 0.35 \cdot S_{prov} + 0.25 \cdot S_{dim} + 0.20 \cdot S_{prec} + 0.20 \cdot S_{repro}$$
+   - **Trazabilidad y Procedencia ($S_{prov}$ - 35%):** % de constantes con citas o metadatos explícitos.
+   - **Rigor Dimensional ($S_{dim}$ - 25%):** Coherencia SI sin factores inline.
+   - **Integridad Numérica ($S_{prec}$ - 20%):** Precisión completa en float64.
+   - **Reproducibilidad ($S_{repro}$ - 20%):** Determinismo y linealidad del grafo.
+
+6. **Dictamen Formal de Auditoría (Estándar Boxmark):**
+   - Encabezado técnico institucional, matriz de pilares, registro pormenorizado de hallazgos con severidad, dictamen de aprobación (*APROBADO*, *OBSERVADO*, *RECHAZADO*) y cuadro de firmas.
+   - Diseñado para impresión y generación de PDF en un clic (`@media print`).
+
+---
+
+## 💻 Uso Local y CLI en Python
 
 ```bash
-uv pip install -e .
-```
+# Clonar el repositorio
+git clone https://github.com/lorenhey/scientific-calculation-auditor.git
+cd scientific-calculation-auditor
 
-## Quick Start / Demo
+# Instalar en entorno editable
+pip install -e .
 
-Run the flagship demo to see it audit a broken Python script and a broken Excel spreadsheet in real-time:
-```bash
+# Ejecutar auditoría sobre un script Python
+sca audit calculo_bomba.py
+
+# Auditar una planilla Excel
+sca audit balance_vapor.xlsx
+
+# Auditar un Jupyter Notebook
+sca audit modelo_cinetico.ipynb
+
+# Ejecutar demo interactiva
 sca demo
 ```
 
-## Usage
+### Ejecución de Pruebas Automatizadas
 
-### Audit a File
-Audit a Python script, Notebook, or Excel workbook:
 ```bash
-sca audit my_analysis.py
-sca audit calculations.xlsx
-sca audit model.ipynb
+python -m pytest
 ```
 
-### Reproduce a Notebook
-Attempt a clean re-execution of a Jupyter notebook to verify that its outputs match the code:
-```bash
-sca reproduce model.ipynb
+---
+
+## 🏛️ Estructura del Repositorio
+
+```
+scientific-calculation-auditor/
+├── index.html                   # Single Page Application interactiva
+├── css/
+│   └── style.css                # Tema dark dashboard + @media print normalizado Boxmark
+├── js/
+│   ├── sca-rules.js             # Catálogo de reglas y presets industriales
+│   ├── sca-engine.js            # Motor cliente de auditoría y cálculo de scores
+│   ├── evidence-graph.js        # Visualizador SVG de la cadena de evidencia
+│   └── app.js                   # Orquestador UI, visor Excel, notebook runner y CLI
+├── src/
+│   └── scientific_calculation_auditor/
+│       ├── cli.py               # CLI implementada con Typer & Rich
+│       ├── ir.py                # Modelo de datos intermedio (IR) y esquemas Pydantic
+│       └── auditors/            # Auditores de Python (AST), Notebooks y Planillas
+├── tests/                       # Suite de tests unitarios pytest
+└── .github/workflows/deploy.yml # Workflow de despliegue a GitHub Pages (master)
 ```
 
-## Audit Example
+---
 
-```text
-> sca audit calculation.py
+## 📜 Licencia y Autoría
 
-Audit Report for calculation.py
-
-+-----------------------------------------------------------------------------+
-| Severity | Rule                | Message             | Evidence             |
-|----------+---------------------+---------------------+----------------------|
-| INFO     | UNDOCUMENTED_CONST  | Variable 'g'        | Line 4               |
-|          |                     | assigned numeric    | Context: g = 9.81    |
-|          |                     | literal 9.81        |                      |
-|          |                     | without explicit    |                      |
-|          |                     | provenance.         |                      |
-| WARNING  | INLINE_CONVERSION   | Possible inline     | Line 6               |
-|          |                     | unit conversion or  | Context:             |
-|          |                     | magic number (3600) | flow_rate_m3_h /     |
-|          |                     | detected in binary  | 3600                 |
-|          |                     | operation.          |                      |
-| WARNING  | EARLY_ROUNDING      | Explicit round()    | Line 9               |
-|          |                     | call detected.      | Context: round(0.5 * |
-|          |                     | Intermediate        | 1000 *               |
-|          |                     | rounding can cause  | flow_rate_m3_s ** 2, |
-|          |                     | precision loss.     | 2)                   |
-+-----------------------------------------------------------------------------+
-```
-
-## Data Philosophy
-
-- **Traceability**: An input without a source is a liability.
-- **Determinism**: Heuristics are explicitly marked as warnings. We do not use LLMs as the core rule engine to ensure deterministic auditing.
-- **No Silent Executions**: Opening an Excel file parses its XML/AST; it does not execute macros.
-
-## License
-MIT License.
+- **Autor:** Lorenzo Pérez (Ingeniero de Proyectos y Procesos)
+- **Organización:** Boxmark Leather Argentina S.A.
+- **Licencia:** MIT License
